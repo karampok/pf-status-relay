@@ -23,6 +23,7 @@ type Nics struct {
 
 // New returns an Nics structure with interfaces that are found in the node.
 func New(nics []string, queue <-chan int, pollingInterval int, nl interfaces.Netlink) Nics {
+	//CLAUDE is the nics need to be of type bond?
 	i := Nics{
 		PFs:             make(map[int]*pf.PF),
 		queue:           queue,
@@ -63,11 +64,13 @@ func (i *Nics) Inspect(ctx context.Context, wg *sync.WaitGroup) {
 			log.Log.Error("pf is not ready", "interface", p.Name, "error", err)
 			continue
 		}
+		//CLAUDE should we allow to continue if not ready?
 		log.Log.Info("pf is ready", "interface", p.Name)
 		p.Ready = true
 	}
 
 	// Process link changes.
+	//CLAUDE we should check whether the wg.Add is the go way to do stuff
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -85,6 +88,7 @@ func (i *Nics) Inspect(ctx context.Context, wg *sync.WaitGroup) {
 				if updated {
 					err = p.Inspect()
 					if err != nil {
+						//CLAUDE we should check if that atomic p.Lock is the way to do go stuff
 						p.Lock()
 						log.Log.Error("pf is not ready", "interface", p.Name, "error", err)
 						p.Ready = false
@@ -149,9 +153,15 @@ func (i *Nics) Monitor(ctx context.Context, wg *sync.WaitGroup) {
 							return
 						}
 
+						// Log when VFs are detected after NoVfs state. //CLAUDE how the "after NoVfs state" works
+						if p.ProtoState == pf.NoVfs {
+							log.Log.Info("VFs detected on interface", "count", len(vfs), "interface", p.Name)
+						}
+
 						// Check lacp state.
 						slave := link.Attrs().Slave
 						if slave != nil {
+							//CLAUDE is that the only way to check if Bond
 							s, ok := slave.(*netlink.BondSlave)
 							if !ok {
 								log.Log.Error("interface does not have BondSlave type on Slave attribute", "interface", p.Name)
@@ -159,6 +169,7 @@ func (i *Nics) Monitor(ctx context.Context, wg *sync.WaitGroup) {
 							}
 
 							if flags.IsProtocolUp(s) {
+								//CLAUDE should I check previous state or just assigne
 								if p.ProtoState != pf.Up {
 									log.Log.Info("lacp is up", "interface", p.Name)
 									p.ProtoState = pf.Up

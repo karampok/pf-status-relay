@@ -41,6 +41,7 @@ jobs:
         env:
           GOARCH: ${{ matrix.goarch }}
           GOOS: ${{ matrix.goos }}
+          //CLAUDE is TARGET ok?
         run: GOARCH="${TARGET}" go build main.go
 
   test:

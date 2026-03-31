@@ -37,6 +37,7 @@ func main() {
 	var wg sync.WaitGroup
 
 	// Initialize interfaces.
+	//CLAUDE can you tell me if this is the idiomatic way to use netlink lib
 	pfs := lacp.New(conf.Interfaces, queue, conf.PollingInterval, &netlink.Handle{})
 	if len(pfs.PFs) == 0 {
 		log.Log.Error("no interfaces found in node")
